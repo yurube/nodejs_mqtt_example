@@ -26,6 +26,31 @@ const options = {
     rejectUnauthorized: false
 };
 const mqtt_client = mqtt.connect(mqtt_host, options);
+
+mqtt_client.on('connect', function () {
+    console.log('mqtt_client connected:' + client_id)
+});
+
+mqtt_client.subscribe('get/#', {qos: 0});
+
+mqtt_client.on('message', function (topic, message) {
+    console.log('Received Message:= ' + message.toString() + '\nOn topic:= ' + topic);
+    io.emit("lamp_status", message.toString());
+});
+
+mqtt_client.on('close', function () {
+    console.log(client_id + ' disconnected')
+});
+
+mqtt_client.on('error', function (err) {
+    console.log(err);
+    mqtt_client.end();
+    throw new Error('error mqtt restart application');
+});
+
+
+
+
 /**
  * Get port from environment and store in Express.
  */
@@ -42,7 +67,7 @@ io.sockets.on('connection', function (socket) {
         let lamp_status = data.lamp_status;
         console.log("[lamp_status] " + lamp_status);
         let mqtt_message = JSON.stringify({output_status: lamp_status});
-        let mqtt_topic = "iot/lamp/";
+        let mqtt_topic = "set/iot/lamp/";
         mqtt_client.publish(mqtt_topic, mqtt_message);
 
     })

@@ -21,6 +21,10 @@
 
     <script>
         let iosocket = io();
+        iosocket.on( 'connect', function () {
+            console.log( 'connected to server' );
+        } );
+        iosocket.on("lamp_status", (msg) =>$('#console-event').html('Status: ' + msg));
         $(function () {
             $('.toggle-event').change(function () {
                 $('#console-event').html('Status: ' + $(this).prop('checked'))
