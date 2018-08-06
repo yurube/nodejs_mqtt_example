@@ -5,10 +5,24 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
 const indexRouter = require('./routes/index');
+const basicAuth = require('basic-auth');
 
 const app = express();
 
-
+let auth = function (req, res, next) {
+    let user = basicAuth(req);
+    if (!user || !user.name || !user.pass) {
+        res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+        res.sendStatus(401);
+        return;
+    }
+    if (user.name === 'admin' && user.pass === 'admin') {
+        next();
+    } else {
+        res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+        res.sendStatus(401);
+    }
+};
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -20,7 +34,7 @@ app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+app.use('/',auth, indexRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
