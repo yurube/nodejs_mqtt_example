@@ -20,7 +20,7 @@
         <div id="console-event">Status: ----</div>
 
     <script>
-        let iosocket = io.connect('http://localhost:3000');
+        let iosocket = io();
         $(function () {
             $('.toggle-event').change(function () {
                 $('#console-event').html('Status: ' + $(this).prop('checked'))
