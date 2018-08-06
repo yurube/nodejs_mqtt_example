@@ -1,0 +1,116 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+const app = require('../app');
+const debug = require('debug')('nodejs-mqtt-example:server');
+const http = require('http');
+const server = http.createServer(app);
+const io = require('socket.io').listen(server);
+
+//mqtt setup
+const mqtt = require('mqtt');
+const client_id = 'iot101_' + Math.random().toString(16).substr(2, 3);
+const mqtt_host = 'mqtt://broker.shiftr.io';
+const options = {
+    keepalive: 10,
+    clientId: client_id,
+    protocolId: 'MQTT',
+    protocolVersion: 4,
+    clean: true,
+    reconnectPeriod: 1000,
+    username: 'haydut001',
+    password: 'c50cd73d',
+    rejectUnauthorized: false
+};
+const mqtt_client = mqtt.connect(mqtt_host, options);
+/**
+ * Get port from environment and store in Express.
+ */
+
+const port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+io.sockets.on('connection', function (socket) {
+    socket.on('button', function (data) {
+        let lamp_status = data.lamp_status;
+        console.log("[lamp_status] " + lamp_status);
+        let mqtt_message = JSON.stringify({output_status: lamp_status});
+        let mqtt_topic = "iot/lamp/";
+        mqtt_client.publish(mqtt_topic, mqtt_message);
+
+    })
+});
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  let port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  let bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
